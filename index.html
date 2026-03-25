@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8 Puzzle Solver — Chess.com Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script>
+    <script>Auth.requireAuth();</script>
+</head>
+
+<body>
+
+    <!-- POST-GAME REVIEW MODAL -->
+    <div id="review-modal" class="modal-backdrop hidden">
+        <div class="modal-box">
+            <button class="modal-close" id="modal-close-btn"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <div class="modal-grade" id="modal-grade">S</div>
+                <div class="modal-title-area">
+                    <h2 id="modal-title">Puzzle Solved!</h2>
+                    <p id="modal-subtitle" class="modal-subtitle">Excellent performance</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-stats-grid" id="review-stats-grid">
+                    <!-- Built by JS -->
+                </div>
+                <div class="review-breakdown">
+                    <h3><i class="fas fa-brain"></i> Performance Analysis</h3>
+                    <div id="review-analysis-text" class="review-analysis"></div>
+                </div>
+                <div class="review-bars">
+                    <div class="review-bar-row">
+                        <span>Efficiency</span>
+                        <div class="review-bar-track">
+                            <div class="review-bar-fill" id="bar-efficiency"></div>
+                        </div>
+                        <span class="review-bar-value" id="lbl-efficiency">—</span>
+                    </div>
+                    <div class="review-bar-row">
+                        <span>Speed</span>
+                        <div class="review-bar-track">
+                            <div class="review-bar-fill" id="bar-speed"></div>
+                        </div>
+                        <span class="review-bar-value" id="lbl-speed">—</span>
+                    </div>
+                    <div class="review-bar-row">
+                        <span>Accuracy</span>
+                        <div class="review-bar-track">
+                            <div class="review-bar-fill" id="bar-accuracy"></div>
+                        </div>
+                        <span class="review-bar-value" id="lbl-accuracy">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-modal-replay"><i class="fas fa-play"></i> Replay
+                    Solution</button>
+                <button class="btn btn-primary" id="btn-modal-new"><i class="fas fa-random"></i> New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-root">
+        <!-- Top Navigation Bar (chess.com style) -->
+        <nav class="top-nav">
+            <div class="nav-logo" style="cursor: pointer;" onclick="window.location.href='dashboard.html'">
+                <i class="fas fa-arrow-left"></i>
+                <span style="margin-left:8px;"><i class="fas fa-th-large"></i> 8 Puzzle Solver</span>
+            </div>
+            <div class="nav-center">
+                <span class="nav-tag"><i class="fas fa-robot"></i> A* Algorithm</span>
+                <span class="nav-tag"><i class="fas fa-map-marker-alt"></i> Manhattan Heuristic</span>
+            </div>
+            <div class="nav-right">
+                <div class="player-badge">
+                    <div class="player-avatar" id="player-avatar"><i class="fas fa-user-astronaut"></i></div>
+                    <div>
+                        <div class="player-name" id="nav-player-name">Player</div>
+                        <div class="player-rating" id="player-rating">⭐ 1200</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Game Layout -->
+        <div class="game-layout">
+
+            <!-- LEFT PANEL -->
+            <aside class="left-panel">
+                <!-- Profile Card -->
+                <div class="panel-card profile-card">
+                    <div class="profile-avatar-lg" id="profile-avatar-lg"><i class="fas fa-user-astronaut"></i></div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profile-player-name">Player</div>
+                        <div class="profile-rating-badge"><i class="fas fa-star"></i> <span
+                                id="profile-rating">1200</span></div>
+                    </div>
+                </div>
+
+                <!-- Session Stats -->
+                <div class="panel-card stats-card">
+                    <div class="card-header"><i class="fas fa-chart-bar"></i> Session Stats</div>
+                    <div class="stats-list">
+                        <div class="stat-row">
+                            <span class="stat-icon wins"><i class="fas fa-check-circle"></i></span>
+                            <span class="stat-label">Solved</span>
+                            <span class="stat-val" id="stat-solved">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon losses"><i class="fas fa-times-circle"></i></span>
+                            <span class="stat-label">Failed Attempts</span>
+                            <span class="stat-val" id="stat-failed">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon streak"><i class="fas fa-fire"></i></span>
+                            <span class="stat-label">Best Streak</span>
+                            <span class="stat-val" id="stat-streak">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon avg"><i class="fas fa-clock"></i></span>
+                            <span class="stat-label">Best Time</span>
+                            <span class="stat-val" id="stat-best-time">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game History -->
+                <div class="panel-card history-card">
+                    <div class="card-header"><i class="fas fa-history"></i> Game History</div>
+                    <div class="history-list" id="player-history-list">
+                        <div class="history-empty" style="text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 1.5rem;">No games played yet.</div>
+                    </div>
+                </div>
+
+                <!-- Heuristic Toggle -->
+                <div class="panel-card">
+                    <div class="card-header"><i class="fas fa-sliders-h"></i> Options</div>
+                    <div class="option-row">
+                        <label class="toggle-label-text" for="toggle-heuristic"><i class="fas fa-calculator"></i> Show
+                            Heuristics</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-heuristic">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="option-row">
+                        <label class="toggle-label-text" for="toggle-correct"><i class="fas fa-check-square"></i>
+                            Highlight Correct</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-correct" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER: Board + Controls -->
+            <main class="board-area">
+                <!-- Eval Bar (vertical, like chess.com) -->
+                <div class="eval-column">
+                    <div class="eval-label top">Hard</div>
+                    <div class="eval-bar-track">
+                        <div class="eval-bar-fill" id="eval-bar-fill"></div>
+                    </div>
+                    <div class="eval-label bottom">Easy</div>
+                </div>
+
+                <div class="board-section">
+                    <!-- Opponent (AI) Info -->
+                    <div class="player-info-bar ai-bar">
+                        <div class="pi-avatar ai-avatar"><i class="fas fa-robot"></i></div>
+                        <div class="pi-name">A* Algorithm</div>
+                        <div class="pi-time" id="ai-optimal-tag">Optimal: <span id="ai-optimal">—</span> moves</div>
+                    </div>
+
+                    <!-- Puzzle Board -->
+                    <div class="board-wrapper" id="board-wrapper">
+                        <div id="puzzle-board" class="puzzle-board"></div>
+                        <div id="unsolvable-overlay" class="overlay hidden">
+                            <div class="overlay-content">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>Unsolvable!</h3>
+                                <p>This board configuration has no solution.</p>
+                                <button id="btn-overlay-shuffle" class="btn btn-primary">Shuffle Again</button>
+                            </div>
+                        </div>
+                        <div id="solving-overlay" class="overlay hidden computing">
+                            <div class="overlay-content">
+                                <div class="spinner"></div>
+                                <h3>Computing A* Path...</h3>
+                                <p id="computing-detail">Searching optimal route</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Player Info -->
+                    <div class="player-info-bar player-bar">
+                        <div class="pi-avatar player-avatar-sm"><i class="fas fa-user-astronaut"></i></div>
+                        <div class="pi-name" id="board-player-name">Player</div>
+                        <div class="pi-timer" id="player-timer">0.0s</div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="board-controls">
+                        <button class="btn btn-icon" id="btn-shuffle" title="Shuffle"><i
+                                class="fas fa-random"></i><span>Shuffle</span></button>
+                        <button class="btn btn-primary solve-btn" id="btn-solve"><i class="fas fa-magic"></i> Solve
+                            A*</button>
+                        <button class="btn btn-icon" id="btn-reset" title="Reset"><i
+                                class="fas fa-undo"></i><span>Reset</span></button>
+                    </div>
+
+                    <!-- Speed Control -->
+                    <div class="speed-control">
+                        <span><i class="fas fa-tachometer-alt"></i> Speed</span>
+                        <div class="speed-tabs">
+                            <button class="speed-tab" data-speed="700">Slow</button>
+                            <button class="speed-tab active" data-speed="200">Medium</button>
+                            <button class="speed-tab" data-speed="60">Fast</button>
+                            <button class="speed-tab" data-speed="20">Turbo</button>
+                        </div>
+                    </div>
+
+                    <!-- Replay Controls (hidden until after solving) -->
+                    <div class="replay-controls hidden" id="replay-controls">
+                        <div class="replay-header"><i class="fas fa-film"></i> Solution Replay</div>
+                        <div class="replay-buttons">
+                            <button class="btn btn-icon-sm" id="btn-replay-start" title="Go to Start"><i
+                                    class="fas fa-step-backward"></i></button>
+                            <button class="btn btn-icon-sm" id="btn-replay-prev" title="Previous Step"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <span class="replay-step" id="replay-step-label">Step 0 / 0</span>
+                            <button class="btn btn-icon-sm" id="btn-replay-next" title="Next Step"><i
+                                    class="fa-solid fa-chevron-right"></i></button>
+                            <button class="btn btn-icon-sm" id="btn-replay-end" title="Go to End"><i
+                                    class="fa-solid fa-step-forward"></i></button>
+                            <button class="btn btn-icon-sm" id="btn-replay-auto" title="Auto Play"><i
+                                    class="fa-solid fa-play"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- RIGHT PANEL -->
+            <aside class="right-panel">
+                <!-- Live Metrics -->
+                <div class="panel-card metrics-card">
+                    <div class="card-header"><i class="fas fa-tachometer-alt"></i> Live Metrics</div>
+                    <div class="metrics-grid-2">
+                        <div class="metric-box">
+                            <div class="metric-icon-badge blue"><i class="fas fa-stopwatch"></i></div>
+                            <div class="metric-text">
+                                <div class="metric-value" id="metric-time">0.0s</div>
+                                <div class="metric-label">Time</div>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-icon-badge green"><i class="fas fa-shoe-prints"></i></div>
+                            <div class="metric-text">
+                                <div class="metric-value" id="metric-moves">0</div>
+                                <div class="metric-label">Moves</div>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-icon-badge purple"><i class="fas fa-project-diagram"></i></div>
+                            <div class="metric-text">
+                                <div class="metric-value" id="metric-nodes">0</div>
+                                <div class="metric-label">Nodes</div>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-icon-badge orange"><i class="fas fa-bullseye"></i></div>
+                            <div class="metric-text">
+                                <div class="metric-value" id="metric-heuristic">—</div>
+                                <div class="metric-label">Heuristic h(n)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Move History (chess notation style) -->
+                <div class="panel-card move-history-card">
+                    <div class="card-header"><i class="fas fa-list-ol"></i> Move History</div>
+                    <div class="move-history-table">
+                        <div class="mh-col-header">
+                            <span>#</span><span>Moved</span><span>h(n)</span>
+                        </div>
+                        <div class="move-history-list" id="move-history-list">
+                            <div class="mh-empty">No moves yet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- A* Algorithm Info -->
+                <div class="panel-card algo-info-card">
+                    <div class="card-header"><i class="fas fa-info-circle"></i> A* Algorithm</div>
+                    <div class="algo-details">
+                        <div class="algo-row"><span class="algo-label">f(n)</span><span class="algo-val"
+                                id="algo-f">—</span></div>
+                        <div class="algo-row"><span class="algo-label">g(n)</span><span class="algo-val"
+                                id="algo-g">—</span></div>
+                        <div class="algo-row"><span class="algo-label">h(n)</span><span class="algo-val"
+                                id="algo-h">—</span></div>
+                        <div class="algo-row"><span class="algo-label">Open Set</span><span class="algo-val"
+                                id="algo-open">—</span></div>
+                        <div class="algo-row"><span class="algo-label">Closed Set</span><span class="algo-val"
+                                id="algo-closed">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Review Button -->
+                <button class="btn btn-review hidden" id="btn-view-review">
+                    <i class="fas fa-chart-pie"></i> View Game Review
+                </button>
+            </aside>
+
+        </div><!-- end .game-layout -->
+
+        <!-- SOLUTION PATH PANEL -->
+        <div class="solution-path-section hidden" id="solution-path-section">
+            <div class="solution-path-header" style="justify-content:center;">
+                <span class="sp-dot"></span>
+                <span class="sp-title" style="flex:0;">SOLUTION PATH</span>
+                <span class="sp-count" id="sp-count" style="margin-left: 10px;"></span>
+            </div>
+            <div class="solution-path-body" id="solution-path-body">
+                <!-- Step cards built by JS -->
+            </div>
+        </div>
+
+    </div><!-- end .app-root -->
+
+    <script src="script.js"></script>
+</body>
+
+</html>

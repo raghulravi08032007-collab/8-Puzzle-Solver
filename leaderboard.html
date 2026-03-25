@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8 Puzzle - Leaderboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .leaderboard-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .leaderboard-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .leaderboard-header i { color: var(--accent-2); margin-right: 10px; }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        
+        .lb-row {
+            background-color: var(--bg-card);
+            transition: transform 0.2s, background 0.2s;
+            cursor: default;
+        }
+        .lb-row:hover {
+            transform: translateY(-2px);
+            background-color: var(--bg-surface-3);
+        }
+        
+        .lb-cell {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .lb-row td:first-child { border-left: 1px solid rgba(255,255,255,0.03); border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+        .lb-row td:last-child { border-right: 1px solid rgba(255,255,255,0.03); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+        
+        .lb-rank {
+            width: 60px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-dim);
+            text-align: center;
+        }
+        
+        /* Top 3 ranks highlighting */
+        .rank-1 .lb-rank { color: #f59e0b; font-size: 1.5rem; }
+        .rank-2 .lb-rank { color: #94a3b8; font-size: 1.3rem; }
+        .rank-3 .lb-rank { color: #b45309; font-size: 1.25rem; }
+        
+        .rank-1 { box-shadow: 0 0 20px rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .rank-2 { box-shadow: 0 0 20px rgba(148, 163, 184, 0.1); }
+        .rank-3 { box-shadow: 0 0 20px rgba(180, 83, 9, 0.1); }
+
+        .lb-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .lb-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--tile-grad);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        .lb-rating {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-3);
+            text-align: right;
+        }
+        
+        .lb-stat {
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .lb-stat span {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <!-- Top Nav -->
+    <nav class="top-nav glass-nav">
+        <div class="nav-logo" style="cursor: pointer;" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-arrow-left"></i>
+            <span style="margin-left:8px;"><i class="fas fa-th-large"></i> 8 Puzzle Solver</span>
+        </div>
+        <div class="nav-right">
+            <div class="player-badge">
+                <div class="player-avatar" id="nav-player-avatar"><i class="fas fa-user-astronaut"></i></div>
+                <div>
+                    <div class="player-name" id="nav-player-name">Player</div>
+                    <div class="player-status"><span class="status-dot"></span>Online</div>
+                </div>
+            </div>
+            <button class="btn btn-icon-sm" onclick="Auth.logout()" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="app-root leaderboard-container">
+        
+        <div class="leaderboard-header">
+            <h1 class="gradient-text"><i class="fas fa-crown"></i> Global Rankings</h1>
+            <p class="subtitle">Top solvers ranked by ELO rating</p>
+        </div>
+        
+        <table class="leaderboard-table" id="leaderboard-body">
+            <!-- JS populated -->
+        </table>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script>
+    <script>
+        // Init
+        Auth.requireAuth();
+        const currentUser = Auth.getUser() || 'Player';
+        document.getElementById('nav-player-name').textContent = currentUser;
+        
+        // Load Settings Theme
+        if (typeof Settings !== 'undefined') Settings.applyTheme();
+
+        // Extract players from LocalStorage
+        function buildLeaderboard() {
+            let players = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('8puzzle_session_stats_')) {
+                    const username = key.replace('8puzzle_session_stats_', '');
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        players.push({
+                            username: username,
+                            rating: data.rating || 1200,
+                            solved: data.solved || 0,
+                            bestTime: data.bestTime || null
+                        });
+                    } catch(e) {}
+                }
+            }
+            
+            // Wait, also parse the un-namespaced one if nobody has namespaced it yet?
+            // Handled mostly by migration in dashboard/script, but let's just sort players we found.
+            
+            // Sort by rating descending
+            players.sort((a, b) => b.rating - a.rating);
+            
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+            
+            if (players.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="4">
+                        <div class="empty-state">
+                            <i class="fas fa-ghost" style="font-size:2rem; margin-bottom:1rem; opacity:0.5;"></i>
+                            <p>No players have completed any puzzles yet!</p>
+                        </div>
+                    </td></tr>
+                `;
+                return;
+            }
+            
+            players.forEach((p, index) => {
+                const rank = index + 1;
+                const timeStr = p.bestTime ? p.bestTime.toFixed(1) + 's' : '--';
+                
+                // Truncate name cleanly
+                let displayUser = p.username;
+                if (displayUser.length > 12) displayUser = displayUser.substring(0, 10) + '..';
+
+                const tr = document.createElement('tr');
+                tr.className = `lb-row rank-${rank}`;
+                if (p.username === currentUser) {
+                    tr.style.boxShadow = 'inset 0 0 0 1px var(--accent)';
+                    tr.style.backgroundColor = 'rgba(124, 58, 237, 0.05)';
+                }
+                
+                tr.innerHTML = `
+                    <td class="lb-cell lb-rank">#${rank}</td>
+                    <td class="lb-cell lb-player">
+                        <div class="lb-avatar"><i class="fas fa-user-astronaut"></i></div>
+                        <div>
+                            ${displayUser}
+                            ${p.username === currentUser ? '<span style="font-size:0.6rem; background:var(--accent); color:white; padding:1px 6px; border-radius:10px; margin-left:8px; vertical-align:middle;">YOU</span>' : ''}
+                        </div>
+                    </td>
+                    <td class="lb-cell lb-stat">${p.solved} <span>Wins</span></td>
+                    <td class="lb-cell lb-stat">${timeStr} <span>Best Time</span></td>
+                    <td class="lb-cell lb-rating"><i class="fas fa-star" style="color:var(--accent-2); font-size:0.9rem;"></i> ${p.rating}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        buildLeaderboard();
+    </script>
+</body>
+</html>

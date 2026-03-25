@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - 8 Puzzle Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script>
+    <script>Auth.requireAuth();</script>
+</head>
+<body class="dashboard-body">
+    <!-- Glowing background elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <nav class="top-nav glass-nav">
+        <div class="nav-logo">
+            <i class="fas fa-th-large"></i>
+            <span>8 Puzzle Solver</span>
+        </div>
+        <div class="nav-right">
+            <div class="player-badge glow-border">
+                <div class="player-avatar"><i class="fas fa-user-astronaut"></i></div>
+                <div class="player-info-text">
+                    <div class="player-name" id="nav-username">Player</div>
+                    <div class="player-status"><span class="status-dot"></span> Online</div>
+                </div>
+            </div>
+            <button class="btn-icon header-btn" id="btn-logout" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="dashboard-layout app-root">
+        <!-- LEFT PANEL -->
+        <aside class="dash-left panel-col">
+            <div class="glass-card profile-showcase glow-hover">
+                <div class="profile-avatar-xl">
+                    <i class="fas fa-user-astronaut"></i>
+                </div>
+                <h2 id="profile-name">Player</h2>
+                <div class="level-badge" id="level-badge">Beginner</div>
+                
+                <div class="win-loss-bar-wrap">
+                    <div class="wl-labels">
+                        <span class="win-lbl"><i class="fas fa-trophy"></i> <span id="win-pct">0%</span></span>
+                        <span class="loss-lbl"><i class="fas fa-times"></i> <span id="loss-pct">0%</span></span>
+                    </div>
+                    <div class="wl-bar">
+                        <div class="wl-fill-win" id="wl-fill-win"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card stats-overview glow-hover">
+                <div class="card-header"><i class="fas fa-chart-line"></i> Campaign Stats</div>
+                <div class="stats-list">
+                    <div class="stat-row">
+                        <div class="stat-icon blue"><i class="fas fa-gamepad"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-val" id="dash-total">0</span>
+                            <span class="stat-label">Total Matches</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-icon green"><i class="fas fa-check"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-val" id="dash-solved">0</span>
+                            <span class="stat-label">Puzzles Solved</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-icon orange"><i class="fas fa-fire"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-val" id="dash-streak">0</span>
+                            <span class="stat-label">Current Streak</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-icon purple"><i class="fas fa-bolt"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-val" id="dash-best-time">—</span>
+                            <span class="stat-label">Best Time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER PANEL -->
+        <section class="dash-center panel-col">
+            <h1 class="welcome-text">Welcome back, <span id="welcome-name" class="gradient-text">Player</span></h1>
+            <p class="subtitle">Select a module to continue your journey.</p>
+            
+            <div class="quick-access-grid">
+                <button class="glass-card access-card glow-hover" onclick="window.location.href='index.html'">
+                    <div class="card-icon-lg pulse-glow"><i class="fas fa-play"></i></div>
+                    <h3>Enter Arena</h3>
+                    <p>Launch the A* Puzzle Solver</p>
+                </button>
+                
+                <button class="glass-card access-card glow-hover" onclick="window.location.href='settings.html'">
+                    <div class="card-icon-lg"><i class="fas fa-cog"></i></div>
+                    <h3>Configuration</h3>
+                    <p>Adjust themes and algorithms</p>
+                </button>
+
+                <button class="glass-card access-card glow-hover" onclick="window.location.href='leaderboard.html'">
+                    <div class="card-icon-lg"><i class="fas fa-crown"></i></div>
+                    <h3>Leaderboard</h3>
+                    <p>Global rankings</p>
+                </button>
+
+                <button class="glass-card access-card glow-hover" id="btn-clear-history">
+                    <div class="card-icon-lg"><i class="fas fa-trash-alt"></i></div>
+                    <h3>Clear Data</h3>
+                    <p>Wipe all local session stats</p>
+                </button>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL -->
+        <aside class="dash-right panel-col">
+            <div class="glass-card history-showcase glow-hover">
+                <div class="card-header"><i class="fas fa-history"></i> Recent Activity</div>
+                <div class="history-list" id="dash-history-list">
+                    <!-- Javascript populates this -->
+                    <div class="history-empty">No activity records found.</div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // Init UI
+        const username = Auth.getUser() || 'Player';
+        document.getElementById('nav-username').textContent = username;
+        document.getElementById('profile-name').textContent = username;
+        document.getElementById('welcome-name').textContent = username;
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            Auth.logout();
+        });
+
+        // Stats logic
+        const currentUser = Auth.getUser() || 'Player';
+        const LS_STATS_KEY = `8puzzle_session_stats_${currentUser}`;
+
+        // Migrate old un-namespaced stats if they exist and this user has no namespaced stats
+        if (!localStorage.getItem(LS_STATS_KEY) && localStorage.getItem('8puzzle_session_stats')) {
+            localStorage.setItem(LS_STATS_KEY, localStorage.getItem('8puzzle_session_stats'));
+            // Keep the old one around just in case, or we can delete it later.
+        }
+
+        function loadDashboardStats() {
+            const raw = localStorage.getItem(LS_STATS_KEY);
+            let s = { solved: 0, failed: 0, streak: 0, bestTime: null, history: [] };
+            if (raw) {
+                try { s = { ...s, ...JSON.parse(raw) }; } catch(e) {}
+            }
+
+            const total = s.solved + s.failed;
+            const winPct = total > 0 ? Math.round((s.solved / total) * 100) : 0;
+            const lossPct = total > 0 ? Math.round((s.failed / total) * 100) : 0;
+
+            // Badges
+            const badgeEl = document.getElementById('level-badge');
+            if (winPct >= 76) {
+                badgeEl.textContent = 'Advanced';
+                badgeEl.className = 'level-badge badge-advanced';
+            } else if (winPct >= 41) {
+                badgeEl.textContent = 'Intermediate';
+                badgeEl.className = 'level-badge badge-intermediate';
+            } else {
+                badgeEl.textContent = 'Beginner';
+                badgeEl.className = 'level-badge badge-beginner';
+            }
+
+            // Bar and Stats
+            document.getElementById('win-pct').textContent = winPct + '%';
+            document.getElementById('loss-pct').textContent = lossPct + '%';
+            document.getElementById('wl-fill-win').style.width = winPct + '%';
+
+            document.getElementById('dash-total').textContent = total;
+            document.getElementById('dash-solved').textContent = s.solved;
+            document.getElementById('dash-streak').textContent = s.streak;
+            document.getElementById('dash-best-time').textContent = s.bestTime ? (s.bestTime / 1000).toFixed(1) + 's' : '—';
+
+            // History
+            const histEl = document.getElementById('dash-history-list');
+            histEl.innerHTML = '';
+            if (s.history.length === 0) {
+                histEl.innerHTML = '<div class="history-empty">No activity records found.</div>';
+            } else {
+                s.history.slice().reverse().forEach(g => {
+                    const row = document.createElement('div');
+                    row.className = 'dash-hist-row';
+                    const isWin = g.result === 'Win';
+                    row.innerHTML = `
+                        <div class="dhr-icon ${isWin ? 'dhr-win' : 'dhr-loss'}">
+                            <i class="fas ${isWin ? 'fa-check' : 'fa-times'}"></i>
+                        </div>
+                        <div class="dhr-info">
+                            <div class="dhr-title">${isWin ? 'Puzzle Solved' : 'Puzzle Failed'}</div>
+                            <div class="dhr-meta">${g.moves} moves • ${g.time}</div>
+                        </div>
+                    `;
+                    histEl.appendChild(row);
+                });
+            }
+        }
+
+        loadDashboardStats();
+
+        document.getElementById('btn-clear-history').addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear your game history?")) {
+                localStorage.removeItem('8puzzle_session_stats');
+                loadDashboardStats();
+            }
+        });
+    </script>
+</body>
+</html>
